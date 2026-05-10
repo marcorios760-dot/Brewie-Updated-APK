@@ -1,0 +1,16 @@
+[Unit]
+Description=ReBrewie Control Pi local web app
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rebrewie-control-pi
+EnvironmentFile=-/opt/rebrewie-control-pi/.env
+ExecStart=/opt/rebrewie-control-pi/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
