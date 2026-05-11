@@ -1,0 +1,65 @@
+FROM ubuntu:22.04
+
+# Prevent interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive \
+    ANDROID_HOME=/opt/android-sdk \
+    ANDROID_SDK_ROOT=/opt/android-sdk \
+    ANDROID_NDK_HOME=/opt/android-ndk \
+    GRADLE_HOME=/opt/gradle \
+    PATH=$PATH:/opt/android-sdk/cmdline-tools/latest/bin:/opt/android-sdk/platform-tools:/opt/android-ndk:/opt/gradle/bin
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openjdk-11-jdk-headless \
+    build-essential \
+    curl \
+    wget \
+    git \
+    unzip \
+    zip \
+    python3 \
+    libncurses5 \
+    libncurses5-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and install Android SDK
+RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
+    wget https://dl.google.com/android/repository/commandlinetools-linux-9123335_latest.zip -O /tmp/cmdline-tools.zip && \
+    unzip -q /tmp/cmdline-tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools && \
+    mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest && \
+    rm /tmp/cmdline-tools.zip
+
+# Accept Android SDK licenses
+RUN yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses
+
+# Install Android SDK platforms and build tools
+RUN ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager \
+    "platforms;android-33" \
+    "platforms;android-32" \
+    "build-tools;33.0.2" \
+    "platform-tools" \
+    "ndk;25.1.8937393"
+
+# Download and install Gradle
+RUN wget https://services.gradle.org/distributions/gradle-8.5-bin.zip -O /tmp/gradle.zip && \
+    unzip -q /tmp/gradle.zip -d /opt && \
+    mv /opt/gradle-8.5 /opt/gradle && \
+    rm /tmp/gradle.zip
+
+# Install apktool
+RUN wget https://github.com/iBotPeaches/Apktool/releases/download/v2.9.1/apktool_2.9.1.jar -O /usr/local/bin/apktool.jar && \
+    wget https://raw.githubusercontent.com/iBotPeaches/Apktool/master/scripts/linux/apktool -O /usr/local/bin/apktool && \
+    chmod +x /usr/local/bin/apktool /usr/local/bin/apktool.jar
+
+WORKDIR /app
+
+# Copy application files
+COPY . .
+
+# Build the app (adjust these commands based on your actual build process)
+RUN if [ -f "build.gradle" ] || [ -f "build.gradle.kts" ]; then \
+        gradle build --no-daemon; \
+    fi
+
+# Default command
+CMD ["/bin/bash"]
