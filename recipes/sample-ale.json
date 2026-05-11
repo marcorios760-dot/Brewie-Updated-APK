@@ -1,0 +1,9 @@
+{
+  "name": "Sample Ale",
+  "batch_l": 20,
+  "boil_min": 60,
+  "grain_bill": [{"name":"Pale malt","kg":4.5}],
+  "hops": [{"name":"Cascade","g":30,"time_min":60},{"name":"Cascade","g":20,"time_min":10}],
+  "steps": [{"name":"Mash","kind":"mash","temperature_c":65,"duration_min":60},{"name":"Mash out","kind":"mashout","temperature_c":76,"duration_min":10},{"name":"Boil","kind":"boil","temperature_c":100,"duration_min":60}],
+  "notes": "Starter recipe for UI testing."
+}
