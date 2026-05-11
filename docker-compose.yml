@@ -1,0 +1,46 @@
+version: '3.9'
+
+services:
+  rebrewie-control-pi:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rebrewie-control-pi
+    ports:
+      - "8080:8000"
+    environment:
+      - BREWIE_TRANSPORT=mock
+      - BREWIE_HOST=192.168.1.50
+      - BREWIE_PORT=8332
+      - BREWIE_SERIAL_PORT=/dev/ttyUSB0
+      - BREWIE_SERIAL_BAUD=115200
+      - LOCAL_BIND=0.0.0.0
+      - LOCAL_PORT=8000
+    volumes:
+      - ./recipes:/app/recipes
+      - ./.env:/app/.env:ro
+    restart: unless-stopped
+    networks:
+      - rebrewie-network
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c 'import httpx; httpx.get(\"http://localhost:8000/api/status\")' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  android-build:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+    container_name: rebrewie-android-build
+    volumes:
+      - ./build:/app/build
+      - ./.gradle:/app/.gradle
+    profiles:
+      - android
+    command: bash -c "if [ -f ./gradlew ]; then ./gradlew assembleRelease; else echo 'gradlew not found - run android-build only if gradlew exists'; fi"
+
+networks:
+  rebrewie-network:
+    driver: bridge
